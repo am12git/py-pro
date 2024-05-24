@@ -1,0 +1,64 @@
+import speech_recognition as sr
+import pyttsx3
+def respond(answer):
+	engine = pyttsx3.init()
+	engine.say("Robot: " + answer)
+	engine.runAndWait()
+	newVoiceRate=100
+	engine.setProperty('rate', newVoiceRate)
+
+
+def listen():
+	recognizer = sr.Recognizer()
+	with sr.Microphone() as source:
+    	ques='Please ask a question'
+    	respond(ques)
+    	print("Robot: Listening... Please ask a question:")
+    	audio = recognizer.listen(source)
+
+	try:
+    	question = recognizer.recognize_google(audio)
+    	return question
+	except sr.UnknownValueError:
+    	print("Robot: Sorry, I didn't catch that. Can you repeat?")
+    	return listen()
+
+user_question = listen()
+print(user_question)
+
+import pathlib
+import textwrap
+
+import google.generativeai as genai
+
+from IPython.display import display
+from IPython.display import Markdown
+
+def to_markdown(text):
+  text = text.replace('•', '  *')
+  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
+
+
+GOOGLE_API_KEY='AIzaSyCsdIy8kcAM4c6r9v9kk-RNUCGGrpSteH'
+
+genai.configure(api_key=GOOGLE_API_KEY)
+for m in genai.list_models():
+  if 'generateContent' in m.supported_generation_methods:
+	print(m.name)
+
+model = genai.GenerativeModel('gemini-pro')
+
+messages = [
+	{'role':'user',
+ 	'parts': [user_question+' explain in brief in 2 sentences for a 6 year old child']}
+]
+response = model.generate_content(messages)
+
+%%time
+response = model.generate_content(user_question+' explain in brief in 2 sentences for a 6 year old child')
+
+print(response.text)
+respond(response.text)
+
+response.candidates
+
